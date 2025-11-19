@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-def load_data(file_path='data/processed/cleaned_data.csv'):
+def load_data(file_path='data/processed/cleaned_data_maschinen_2.csv'):
    df = pd.read_csv(file_path)
    return df
 
@@ -10,7 +10,7 @@ def split_data(
     test_size: float = 0.2,
     random_state: int = 42
 ):
-    target_col = "Preis"
+    target_col = "Auftragsende_IST"
     if target_col not in data.columns:
         raise ValueError(f"Die Spalte '{target_col}' fehlt im DataFrame!")
 
