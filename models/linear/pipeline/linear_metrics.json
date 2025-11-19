@@ -1,0 +1,11 @@
+{
+    "timestamp": "2025-11-19 14:10:47",
+    "model_path": "models/linear/pipeline/linear_pipeline.pkl",
+    "metrics": {
+        "MAE_ns": 4433449728279246.5,
+        "MAE_days": 51.313075558787574,
+        "MSE": 4.8271958096124045e+31,
+        "R2": 0.9941675436861731
+    },
+    "model_type": "Linear"
+}
