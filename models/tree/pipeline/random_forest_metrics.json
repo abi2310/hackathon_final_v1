@@ -1,8 +1,0 @@
-{
-    "timestamp": "2025-11-19 14:57:05",
-    "model_path": "../models/tree/pipeline/best_random_forest_pipeline.pkl",
-    "metrics": {
-        "MAE_days": 52.06895290141735
-    },
-    "model_type": "RandomForest_Tuned"
-}
