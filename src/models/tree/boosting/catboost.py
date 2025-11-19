@@ -1,94 +1,162 @@
-from src.data.load_data import split_data, load_data
-import pandas as pd
+from src.data.load_data import load_data
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-import optuna
-from catboost import CatBoostRegressor, Pool, cv
-import os 
-import json
-import datetime
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
+
+import pandas as pd
 import numpy as np
+import os
+import json
+from datetime import datetime
+import joblib
 
-# Daten laden und aufteilen
-X_train, X_test, y_train, y_test = split_data(load_data(), test_size=0.2, random_state=42)
+from lightgbm import LGBMRegressor
 
-cat_features = X_train.select_dtypes(include=['object', 'category']).columns.tolist()
+# =============================
+# Konstanten
+# =============================
+TARGET_END = "Auftragsende_IST"
+START_COL = "Auftragseingang"
 
-train_pool = Pool(X_train, y_train, cat_features=cat_features)
+DATE_COLS = [
+    "Auftragseingang",
+    "Auftragsende_SOLL",
+    "AFO_Start_SOLL",
+    "AFO_Ende_SOLL",
+    "AFO_Start_IST",
+    "AFO_Ende_IST",
+]
 
+# =============================
+# Daten laden
+# =============================
+data = load_data()
 
-# Optuna setup für Hyperparameter-Tuning
-def objective(trial):
-    params = {
-        "depth": trial.suggest_int("depth", 6, 8),
-        "learning_rate": trial.suggest_float("learning_rate", 0.05, 0.3),
-        "iterations": trial.suggest_int("iterations", 200, 800),
-        "l2_leaf_reg": trial.suggest_float("l2_leaf_reg", 1, 10),
-        "bagging_temperature": trial.suggest_float("bagging_temperature", 0, 1),
-        "random_strength": trial.suggest_float("random_strength", 0, 5),
-        "loss_function": "RMSE",
-        "early_stopping_rounds": 50,
-        "verbose": False
-    }
+print("Original Spalten:", list(data.columns))
 
-    cv_results = cv(
-            pool=train_pool,
-            params=params,
-            fold_count=8,                 
-            shuffle=True,
-            partition_random_seed=42,
-            verbose=False
-        )
-    best_rmse = np.min(cv_results["test-RMSE-mean"])
-    return best_rmse
+# -----------------------------
+# Datums-Spalten parsen
+# -----------------------------
+for col in DATE_COLS:
+    data[col] = pd.to_datetime(data[col], errors="coerce")
 
-study = optuna.create_study(direction="minimize")
-study.optimize(objective, n_trials=50)
+# Target
+data[TARGET_END] = pd.to_datetime(data[TARGET_END], errors="coerce")
 
-print("Beste Hyperparameter:", study.best_params)
+# Valid rows
+mask_valid = (~data[TARGET_END].isna()) & (~data[START_COL].isna())
+data = data[mask_valid].copy()
 
-# Modell mit den besten Hyperparametern trainieren
-best_model = CatBoostRegressor(**study.best_params, silent=True)
-best_model.fit(X_train, y_train, cat_features=cat_features)
+start_dt = data[START_COL]
 
-preds = best_model.predict(X_test)
-mse = mean_squared_error(y_test, preds)
-r2 = r2_score(y_test, preds)
-mae = mean_absolute_error(y_test, preds)
+# =============================
+# Dauer in Tagen berechnen
+# =============================
+duration_days = (data[TARGET_END] - start_dt).dt.total_seconds() / 86400.0
+duration_days = duration_days.astype("float32")
+y = duration_days
 
-# Ergebnisse ausgeben
+# =============================
+# Date-features extrahieren
+# =============================
+for col in DATE_COLS:
+    data[f"{col}_dow"] = data[col].dt.dayofweek
+    data[f"{col}_hour"] = data[col].dt.hour
+    data[f"{col}_day"] = data[col].dt.day
+    data[f"{col}_month"] = data[col].dt.month
+    data[f"{col}_week"] = data[col].dt.isocalendar().week.astype(int)
 
-print("Mean Absolute Error:", mae)
-print("Mean Squared Error:", mse)
-print("R2 Score:", r2)
-feature = best_model.get_feature_importance(prettified=True)
-print(feature)
+# Original datetime-Spalten entfernen
+data = data.drop(columns=DATE_COLS + [TARGET_END])
 
+# =============================
+# ID-Spalten entfernen (vermeidet Overfitting)
+# =============================
+DROP_IDS = ["AuftragsID", "BauteilID", "MaschinenID"]
+for col in DROP_IDS:
+    if col in data.columns:
+        data = data.drop(columns=[col])
 
-output_dir = "models/tree/boosting"
-os.makedirs(output_dir, exist_ok=True)
+# =============================
+# Feature-Typen bestimmen
+# =============================
+categorical = data.select_dtypes(include=["object"]).columns.tolist()
+numeric = data.select_dtypes(include=[np.number]).columns.tolist()
 
-# Modell speichern
-model_path = os.path.join(output_dir, "catboost_model.cbm")
-best_model.save_model(model_path)
+print("KATEGORIEN:", categorical)
+print("NUMERISCH:", numeric)
 
+# =============================
+# Train/Test Split
+# =============================
+X_train, X_test, y_train, y_test, start_train_dt, start_test_dt = train_test_split(
+    data, y, start_dt, test_size=0.2, random_state=42
+)
 
-# To load the model later, use:
-# loaded_model = CatBoostRegressor()
-# loaded_model.load_model("models/boosting/catboost_best.cbm")
+# =============================
+# Preprocessing
+# =============================
+cat_pipeline = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=True)),
+])
 
+num_pipeline = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="median")),
+])
 
-# Metriken & Parameter speichern
-results = {
-    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    "model_path": model_path,
-    "metrics": {
-        "MAE": mae,
-        "MSE": mse,
-        "R2": r2
-    },
-    "best_params": study.best_params
-}
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("cat", cat_pipeline, categorical),
+        ("num", num_pipeline, numeric),
+    ]
+)
 
-metrics_path = os.path.join(output_dir, "catboost_metrics.json")
-with open(metrics_path, "w") as f:
-    json.dump(results, f, indent=4)
+# =============================
+# LightGBM Modell
+# =============================
+lgbm_model = LGBMRegressor(
+    n_estimators=800,
+    learning_rate=0.05,
+    num_leaves=64,
+    min_data_in_leaf=100,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    random_state=42,
+)
+
+pipe = Pipeline([
+    ("prep", preprocessor),
+    ("model", lgbm_model),
+])
+
+# =============================
+# Train
+# =============================
+pipe.fit(X_train, y_train)
+
+preds_days = pipe.predict(X_test)
+
+# Evaluation
+mae = mean_absolute_error(y_test, preds_days)
+mse = mean_squared_error(y_test, preds_days)
+r2 = r2_score(y_test, preds_days)
+
+print("\n===== MODEL PERFORMANCE =====")
+print("MAE Tage:", mae)
+print("MSE Tage^2:", mse)
+print("R²:", r2)
+
+# =============================
+# Speichern
+# =============================
+out_dir = "models/lightgbm/pipeline"
+os.makedirs(out_dir, exist_ok=True)
+
+model_path = os.path.join(out_dir, "lightgbm_pipeline.pkl")
+joblib.dump(pipe, model_path)
+
+print("📦 Saved:", model_path)

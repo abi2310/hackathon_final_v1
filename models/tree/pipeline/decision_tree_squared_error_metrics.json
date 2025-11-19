@@ -1,11 +1,11 @@
 {
-    "timestamp": "2025-11-19 15:04:51",
+    "timestamp": "2025-11-19 18:37:59",
     "model_path": "models/tree/pipeline/decision_tree_squared_error_pipeline.pkl",
     "metrics": {
-        "MAE_ns": 4064315732335070.0,
-        "MAE_days": 47.040691346470716,
-        "MSE": 4.265453727433095e+31,
-        "R2": 0.994846268205163
+        "MAE_ns": 4042755639001246.0,
+        "MAE_days": 46.79115322918109,
+        "MSE": 4.163597385842193e+31,
+        "R2": 0.9948792297461657
     },
     "model_type": "DecisionTree_squared_error"
 }

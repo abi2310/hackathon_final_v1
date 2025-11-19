@@ -3,13 +3,13 @@ import numpy as np
 import joblib
 import os
 
-MODEL_PATH = "models/linear/pipeline/linear_pipeline.pkl"
+MODEL_PATH = "models/lightgbm/pipeline/lightgbm_pipeline.pkl"
 
-PUBLIC_PATH = "data/raw/df_eval_public_2025-11-03.csv"
-PRIVATE_PATH = "data/raw/df_eval_private_2025-11-03.csv"
+PUBLIC_PATH = "data/processed/df_eval_public_v2.csv"
+PRIVATE_PATH = "data/processed/df_eval_privae_v2.csv"
 IDS_PATH = "data/raw/df_IDs_for_eval_2025-11-03.csv"
 
-OUTPUT_PATH = "submissions/linear_submission_new.csv"
+OUTPUT_PATH = "submissions/lightgbm_submission_.csv"
 os.makedirs("submissions", exist_ok=True)
 
 print("📥 Lade Modell...")

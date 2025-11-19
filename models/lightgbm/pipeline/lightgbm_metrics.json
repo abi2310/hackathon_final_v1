@@ -1,0 +1,10 @@
+{
+    "timestamp": "2025-11-19 19:31:40",
+    "model_path": "models/lightgbm/pipeline/lightgbm_pipeline.pkl",
+    "metrics": {
+        "MAE_days": 49.767526810586,
+        "MSE_days2": 4755.358024724255,
+        "R2": 0.799290579302967
+    },
+    "model_type": "LightGBM_duration_days"
+}
