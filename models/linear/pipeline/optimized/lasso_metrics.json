@@ -1,0 +1,11 @@
+{
+    "timestamp": "2025-11-19 16:12:02",
+    "model_path": "models/linear/pipeline/optimized/lasso_pipeline.pkl",
+    "metrics": {
+        "MAE_ns": 7.780900832659621e+16,
+        "MAE_days": 900.5672260022709,
+        "MSE": 8.121425641120291e+33,
+        "R2": 0.01872925553374616
+    },
+    "model_type": "Lasso"
+}

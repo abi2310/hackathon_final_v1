@@ -1,0 +1,11 @@
+{
+    "timestamp": "2025-11-19 16:13:34",
+    "model_path": "models/linear/pipeline/optimized/elasticnet_pipeline.pkl",
+    "metrics": {
+        "MAE_ns": 7.784957174334294e+16,
+        "MAE_days": 901.0367099923952,
+        "MSE": 8.126176739865107e+33,
+        "R2": 0.018155204325451813
+    },
+    "model_type": "ElasticNet"
+}

@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-def load_data(file_path='data/processed/data_cleaned_maschinen_2.csv'):
+def load_data(file_path='data/processed/data_cleaned_3.csv'):
    df = pd.read_csv(file_path)
    print("Spalten im DataFrame:")
    print(df.columns.tolist())

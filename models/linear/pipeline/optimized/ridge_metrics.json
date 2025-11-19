@@ -1,0 +1,11 @@
+{
+    "timestamp": "2025-11-19 16:11:06",
+    "model_path": "models/linear/pipeline/optimized/ridge_pipeline.pkl",
+    "metrics": {
+        "MAE_ns": 7.780900906169322e+16,
+        "MAE_days": 900.5672345103382,
+        "MSE": 8.121425606006086e+33,
+        "R2": 0.018729259776417817
+    },
+    "model_type": "Ridge"
+}

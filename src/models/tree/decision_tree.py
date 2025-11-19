@@ -92,7 +92,7 @@ preprocessor = ColumnTransformer(
 # -----------------------------
 # Entscheidungsbäume
 # -----------------------------
-criterions = ["absolute_error", "squared_error"]
+criterions = ["squared_error", "absolute_error"]
 
 output_dir = "models/tree/pipeline"
 os.makedirs(output_dir, exist_ok=True)
