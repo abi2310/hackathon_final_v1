@@ -3,13 +3,13 @@ import numpy as np
 import joblib
 import os
 
-MODEL_PATH = "models/lightgbm/pipeline/lightgbm_pipeline.pkl"
+MODEL_PATH = "models/lightgbm/pipeline/best_lgbm_pipeline.pkl"
 
 PUBLIC_PATH = "data/processed/df_eval_public_v2.csv"
 PRIVATE_PATH = "data/processed/df_eval_privae_v2.csv"
 IDS_PATH = "data/raw/df_IDs_for_eval_2025-11-03.csv"
 
-OUTPUT_PATH = "submissions/475_Lightgbm_submission_v7.csv"
+OUTPUT_PATH = "submissions/XXX_Lightgbm_submission_v7.csv"
 os.makedirs("submissions", exist_ok=True)
 
 # Muss zu deinem Trainingsskript passen!
